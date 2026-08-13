@@ -7,6 +7,18 @@ exports.register = async (req, res) => {
   try {
     const { nombre, correo, password } = req.body;
 
+    // Validaciones básicas de entrada
+    if (!nombre || !correo || !password) {
+      return res.sendResponse('error', 'Todos los campos (nombre, correo, password) son obligatorios', null, 400);
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(correo)) {
+      return res.sendResponse('error', 'El formato del correo es inválido', null, 400);
+    }
+    if (password.length < 6) {
+      return res.sendResponse('error', 'La contraseña debe tener al menos 6 caracteres', null, 400);
+    }
+
     // Verificar si el usuario ya existe
     const usuarioExistente = await User.findOne({ where: { correo } });
     if (usuarioExistente) {
@@ -39,6 +51,11 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { correo, password } = req.body;
+
+    // Validaciones básicas de entrada
+    if (!correo || !password) {
+      return res.sendResponse('error', 'El correo y la contraseña son obligatorios', null, 400);
+    }
 
     const usuario = await User.findOne({ where: { correo } });
     if (!usuario) {

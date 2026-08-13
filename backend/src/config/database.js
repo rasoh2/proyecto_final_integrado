@@ -12,16 +12,31 @@ if (process.env.DATABASE_URL) {
   console.log(`🔌 Conectando usando variables individuales a host: ${process.env.DB_HOST || "localhost"}`);
 }
 
+const isProduction = process.env.NODE_ENV === "production" || 
+  (process.env.DATABASE_URL && (process.env.DATABASE_URL.includes("neon.tech") || process.env.DATABASE_URL.includes("render.com")));
+
+const sslOptions = isProduction
+  ? {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false,
+      },
+    }
+  : {};
+
+const poolConfig = {
+  max: 5, // Límite de conexiones en el pool para no saturar Neon/Render en planes gratuitos
+  min: 0,
+  acquire: 30000,
+  idle: 10000,
+};
+
 const sequelize = process.env.DATABASE_URL
   ? new Sequelize(process.env.DATABASE_URL, {
       dialect: "postgres",
       logging: false,
-      dialectOptions: {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false,
-        },
-      },
+      dialectOptions: sslOptions,
+      pool: poolConfig,
     })
   : new Sequelize(
       process.env.DB_NAME || "alkewallet_db",
@@ -31,6 +46,8 @@ const sequelize = process.env.DATABASE_URL
         host: process.env.DB_HOST || "localhost",
         dialect: "postgres",
         logging: false,
+        dialectOptions: sslOptions,
+        pool: poolConfig,
       },
     );
 

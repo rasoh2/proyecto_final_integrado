@@ -1,6 +1,8 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
+const User = require('./User');
+
 const ContactoTransferencia = sequelize.define('ContactoTransferencia', {
   id: {
     type: DataTypes.INTEGER,
@@ -39,5 +41,9 @@ const ContactoTransferencia = sequelize.define('ContactoTransferencia', {
   tableName: 'contacto_transferencia',
   timestamps: true,
 });
+
+// Relación con el modelo User
+User.hasMany(ContactoTransferencia, { foreignKey: 'usuarioId', as: 'contactos' });
+ContactoTransferencia.belongsTo(User, { foreignKey: 'usuarioId', as: 'usuario' });
 
 module.exports = ContactoTransferencia;
