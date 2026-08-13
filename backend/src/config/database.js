@@ -1,9 +1,20 @@
 const { Sequelize } = require("sequelize");
 require("dotenv").config();
 
-const dbUrl = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+let dbUrl = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
 
 if (dbUrl) {
+  // Limpiar channel_binding si está presente para evitar problemas de compatibilidad con el driver 'pg'
+  if (dbUrl.includes("channel_binding=")) {
+    try {
+      const urlObj = new URL(dbUrl);
+      urlObj.searchParams.delete("channel_binding");
+      dbUrl = urlObj.toString();
+    } catch (e) {
+      dbUrl = dbUrl.replace(/[?&]channel_binding=[^&]*/g, "");
+    }
+  }
+
   try {
     const parsed = new URL(dbUrl);
     console.log(`🔌 Conectando a base de datos via URL en host: ${parsed.hostname}, puerto: ${parsed.port || '5432'}, db: ${parsed.pathname}`);
@@ -15,7 +26,7 @@ if (dbUrl) {
 }
 
 const isProduction = process.env.NODE_ENV === "production" || 
-  (dbUrl && (dbUrl.includes("neon.tech") || dbUrl.includes("render.com")));
+  (dbUrl && (dbUrl.includes("neon.tech") || dbUrl.includes("render.com") || dbUrl.includes("sslmode=require")));
 
 const sslOptions = isProduction
   ? {
