@@ -63,6 +63,10 @@ const testConnection = async () => {
     console.log("✅ Conexión a PostgreSQL establecida con éxito.");
   } catch (error) {
     console.error("❌ Error al conectar a la base de datos:", error);
+    if (sequelize && sequelize.config) {
+      const { host, port, database, username } = sequelize.config;
+      console.error(`🔌 Detalle del intento de conexión - Host: ${host || 'no especificado'}, Puerto: ${port || 'no especificado'}, DB: ${database || 'no especificado'}, Usuario: ${username || 'no especificado'}`);
+    }
   }
 };
 
