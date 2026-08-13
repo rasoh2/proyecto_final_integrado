@@ -1,6 +1,18 @@
 # AGENTS.md - Sistema de Agentes de AlkeWallet
 
-Este archivo define los perfiles, roles y directrices de los agentes de IA especializados que participan en el desarrollo, migración y aseguramiento de calidad de AlkeWallet.
+Este archivo define los perfiles, roles, directrices y flujos de trabajo de los agentes de IA especializados que participan en el desarrollo, migración, planificación y aseguramiento de calidad de AlkeWallet.
+
+---
+
+## 📋 @wallet-planner (Planificación & Coordinación)
+
+### Rol y Responsabilidad
+Actúa como director de orquesta y planificador del proyecto. Analiza las solicitudes del usuario, gestiona la descomposición de tareas, elabora los planes de ejecución y coordina el traspaso de información y las fases de aprobación entre los agentes ejecutores (`@react-migrator` y `@bank-architect`) y el auditor (`@bank-qa`). **Nunca escribe código de aplicación directamente.**
+
+### Tareas Clave
+- **Análisis de Requerimientos:** Evaluar el alcance de cada nueva característica o corrección solicitada por el usuario.
+- **Creación de Planes Generales:** Escribir y mantener el plan de implementación (`implementation_plan.md`) y la bitácora de tareas (`task.md`).
+- **Orquestación de Entregas:** Leer los informes de avance y pruebas de los subagentes, consolidar los resultados en el archivo `walkthrough.md` y presentar la entrega final al usuario.
 
 ---
 
@@ -10,9 +22,9 @@ Este archivo define los perfiles, roles y directrices de los agentes de IA espec
 Revisar la lógica del servidor, el diseño de la API REST (Node.js/Express/TypeScript) y la persistencia en PostgreSQL con transacciones ACID. Garantiza la escalabilidad, modularidad y seguridad del backend.
 
 ### Tareas Clave
-- **Integración con CoinGecko**: Analizar la frecuencia de consumo y almacenamiento de cotizaciones de criptomonedas en tiempo real.
-- **Saldos y Decimales**: Estructurar los saldos iniciales de las cuentas (por ejemplo, definir el saldo de prueba de $1,000,000) utilizando precisión decimal exacta (`DECIMAL(15, 2)` o similar) para evitar errores de redondeo en operaciones monetarias.
-- **Transacciones ACID**: Garantizar que todas las transferencias bancarias y depósitos se realicen dentro de transacciones de base de datos seguras con manejo adecuado de rollback.
+- **Integración con CoinGecko:** Analizar la frecuencia de consumo y almacenamiento de cotizaciones de criptomonedas en tiempo real.
+- **Saldos y Decimales:** Estructurar los saldos iniciales de las cuentas utilizando precisión decimal exacta (`DECIMAL(15, 2)` o similar) para evitar errores de redondeo en operaciones monetarias.
+- **Transacciones ACID:** Garantizar que todas las transferencias bancarias y depósitos se realicen dentro de transacciones de base de datos seguras con manejo adecuado de rollback.
 
 ---
 
@@ -22,12 +34,8 @@ Revisar la lógica del servidor, el diseño de la API REST (Node.js/Express/Type
 Encargado de la migración de la interfaz de usuario desde páginas HTML estáticas y JavaScript/jQuery vanilla hacia una SPA modular construida con React, Vite y TypeScript.
 
 ### Tareas Clave
-- **Análisis de DOM**: Identificar componentes dinámicos de las páginas HTML estáticas (`menu.html`, `deposit.html`, `sendMoney.html`, `transactions.html`).
-- **Planificación de Componentes**: Diseñar componentes modulares reutilizables:
-  - `TarjetaSaldo`: Renderizar el saldo actual dinámico.
-  - `PanelTransferencias`: Formulario y contactos para realizar transferencias.
-  - `WidgetCripto`: Componente de cotizaciones de criptomonedas en tiempo real con datos de CoinGecko.
-- **Gestión de Estado**: Definir la estrategia de estados locales (React state) y globales (Context API o Redux) para persistir la sesión y datos temporales.
+- **Planificación de Componentes:** Diseñar y programar componentes modulares reutilizables (`TarjetaSaldo`, `PanelTransferencias`, `WidgetCripto`, `HistorialTransacciones`, `LoginRegistro`) utilizando Bootstrap 5.
+- **Gestión de Estado:** Definir la estrategia de estados locales y globales en React para persistir sesiones, tokens JWT y saldos simulados de forma reactiva.
 
 ---
 
@@ -37,14 +45,27 @@ Encargado de la migración de la interfaz de usuario desde páginas HTML estáti
 Garantizar la calidad del código, la cobertura de pruebas unitarias/integración, la prevención de saldos negativos y la detección de condiciones de carrera en operaciones concurrentes.
 
 ### Tareas Clave
-- **Prevención de Saldo Negativo**: Auditar que todos los endpoints y lógica del backend verifiquen el saldo disponible con bloqueos (`SELECT FOR UPDATE`) para evitar saldos negativos bajo cargas concurrentes.
-- **Condiciones de Carrera (Race Conditions)**: Analizar la concurrencia en la API de transferencias antes de proceder con migraciones.
-- **Pruebas Automatizadas**: Definir los casos de prueba críticos (depósito, transferencia exitosa, transferencia sin saldo, transferencia a uno mismo).
+- **Prevención de Saldo Negativo:** Auditar que todos los endpoints y lógica del backend verifiquen el saldo disponible con bloqueos (`SELECT FOR UPDATE`) para evitar saldos negativos bajo cargas concurrentes.
+- **Condiciones de Carrera (Race Conditions):** Analizar la concurrencia en la API de transferencias antes de proceder con migraciones.
+- **Pruebas Automatizadas:** Definir y validar los casos de prueba críticos (depósito, transferencia exitosa, transferencia sin saldo, transferencia a uno mismo).
 
 ---
 
-## 📋 Directrices Generales de Cooperación
+## 🔄 Flujo de Trabajo Agentic (Multi-Agente)
 
-1. **Revisión de Arquitectura**: Cada cambio en la base de datos debe ser aprobado bajo la lupa de `@bank-architect`.
-2. **Modularidad Frontend**: Cada nuevo componente React debe estructurarse bajo los estándares de limpieza y tipado de `@react-migrator`.
-3. **Auditoría de Cambios**: Ningún código de backend puede subirse a producción sin que `@bank-qa` verifique la mitigación de condiciones de carrera y la validez de las transacciones ACID.
+El desarrollo del proyecto con subagentes se organiza en 4 fases secuenciales coordinadas por el planificador:
+
+```mermaid
+graph TD
+    A[Usuario solicita requerimiento] --> B["@wallet-planner crea el Plan de Implementación y las Tareas"]
+    B --> C["Aprobación del Plan por el Usuario"]
+    C --> D["@react-migrator / @bank-architect ejecutan los cambios de código"]
+    D --> E["@bank-qa audita el código, busca race conditions y ejecuta pruebas unitarias"]
+    E --> F["@wallet-planner recopila los reportes y genera el walkthrough.md"]
+    F --> G[Entrega final verificada al usuario]
+```
+
+1. **Planificación (`@wallet-planner`):** Recibe el objetivo, analiza las dependencias y crea el archivo `implementation_plan.md` y `task.md`. No se toca código fuente en esta fase.
+2. **Ejecución (`@react-migrator` / `@bank-architect`):** Escriben y modifican el código fuente (componentes React, endpoints Express) basándose estrictamente en las directrices y contratos del plan.
+3. **Auditoría & Pruebas (`@bank-qa`):** Verifica que el backend implemente transacciones ACID seguras (evitando saldos negativos) y que el frontend compile sin errores. Reporta fallos al planificador si los hay.
+4. **Cierre (`@wallet-planner`):** Consolida las pruebas, documenta los hallazgos en `walkthrough.md` (con capturas/grabaciones) y cierra la bitácora de tareas para entrega al usuario.
