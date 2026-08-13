@@ -25,7 +25,7 @@ const User = sequelize.define(
     saldo: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
-      defaultValue: 100000.0, // Todo usuario arranca con 100,000 de saldo a nivel DB
+      defaultValue: 1000000.00, // Todo usuario arranca con 1,000,000 de saldo a nivel DB
     },
     avatar: {
       type: DataTypes.STRING, // Será la ruta de archivo para Multer (ej: 'uploads/file123.jpg')
