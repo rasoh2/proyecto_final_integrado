@@ -1,7 +1,7 @@
 const { Sequelize } = require("sequelize");
 require("dotenv").config();
 
-let dbUrl = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+let dbUrl = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL;
 
 if (dbUrl) {
   // Limpiar channel_binding si está presente para evitar problemas de compatibilidad con el driver 'pg'
@@ -22,20 +22,8 @@ if (dbUrl) {
     console.log(`🔌 URL de base de datos detectada pero falló al parsear: ${e.message}`);
   }
 } else {
-  console.log(`🔌 Conectando usando variables individuales a host: ${process.env.DB_HOST || "localhost"}`);
+  console.log(`🔌 Conectando usando variables individuales a host: ${process.env.DB_HOST || "127.0.0.1"}`);
 }
-
-const isProduction = process.env.NODE_ENV === "production" || 
-  (dbUrl && (dbUrl.includes("neon.tech") || dbUrl.includes("render.com") || dbUrl.includes("sslmode=require")));
-
-const sslOptions = isProduction
-  ? {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false,
-      },
-    }
-  : {};
 
 const poolConfig = {
   max: 5, // Límite de conexiones en el pool para no saturar Neon/Render en planes gratuitos
@@ -48,7 +36,12 @@ const sequelize = dbUrl
   ? new Sequelize(dbUrl, {
       dialect: "postgres",
       logging: false,
-      dialectOptions: sslOptions,
+      dialectOptions: {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
+        },
+      },
       pool: poolConfig,
     })
   : new Sequelize(
@@ -56,10 +49,10 @@ const sequelize = dbUrl
       process.env.DB_USER || "postgres",
       process.env.DB_PASSWORD || "admin",
       {
-        host: process.env.DB_HOST || "localhost",
+        host: process.env.DB_HOST || "127.0.0.1",
+        port: process.env.DB_PORT || 5432,
         dialect: "postgres",
         logging: false,
-        dialectOptions: sslOptions,
         pool: poolConfig,
       },
     );
