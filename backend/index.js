@@ -2,7 +2,7 @@ require("dotenv").config();
 
 // Validar variables de entorno críticas en el inicio para evitar fallas silenciosas en producción
 const REQUIRED_ENV_VARS = ["JWT_SECRET"];
-if (!process.env.DATABASE_URL) {
+if (!process.env.NEON_DATABASE_URL && !process.env.DATABASE_URL) {
   REQUIRED_ENV_VARS.push("DB_NAME", "DB_USER", "DB_PASSWORD", "DB_HOST");
 }
 REQUIRED_ENV_VARS.forEach((varName) => {

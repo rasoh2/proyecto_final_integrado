@@ -1,19 +1,21 @@
 const { Sequelize } = require("sequelize");
 require("dotenv").config();
 
-if (process.env.DATABASE_URL) {
+const dbUrl = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+
+if (dbUrl) {
   try {
-    const parsed = new URL(process.env.DATABASE_URL);
-    console.log(`🔌 Conectando a base de datos via DATABASE_URL en host: ${parsed.hostname}, puerto: ${parsed.port || '5432'}, db: ${parsed.pathname}`);
+    const parsed = new URL(dbUrl);
+    console.log(`🔌 Conectando a base de datos via URL en host: ${parsed.hostname}, puerto: ${parsed.port || '5432'}, db: ${parsed.pathname}`);
   } catch (e) {
-    console.log(`🔌 DATABASE_URL detectada pero falló al parsear como URL: ${e.message}`);
+    console.log(`🔌 URL de base de datos detectada pero falló al parsear: ${e.message}`);
   }
 } else {
   console.log(`🔌 Conectando usando variables individuales a host: ${process.env.DB_HOST || "localhost"}`);
 }
 
 const isProduction = process.env.NODE_ENV === "production" || 
-  (process.env.DATABASE_URL && (process.env.DATABASE_URL.includes("neon.tech") || process.env.DATABASE_URL.includes("render.com")));
+  (dbUrl && (dbUrl.includes("neon.tech") || dbUrl.includes("render.com")));
 
 const sslOptions = isProduction
   ? {
@@ -31,8 +33,8 @@ const poolConfig = {
   idle: 10000,
 };
 
-const sequelize = process.env.DATABASE_URL
-  ? new Sequelize(process.env.DATABASE_URL, {
+const sequelize = dbUrl
+  ? new Sequelize(dbUrl, {
       dialect: "postgres",
       logging: false,
       dialectOptions: sslOptions,
