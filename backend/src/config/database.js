@@ -1,6 +1,17 @@
 const { Sequelize } = require("sequelize");
 require("dotenv").config();
 
+if (process.env.DATABASE_URL) {
+  try {
+    const parsed = new URL(process.env.DATABASE_URL);
+    console.log(`🔌 Conectando a base de datos via DATABASE_URL en host: ${parsed.hostname}, puerto: ${parsed.port || '5432'}, db: ${parsed.pathname}`);
+  } catch (e) {
+    console.log(`🔌 DATABASE_URL detectada pero falló al parsear como URL: ${e.message}`);
+  }
+} else {
+  console.log(`🔌 Conectando usando variables individuales a host: ${process.env.DB_HOST || "localhost"}`);
+}
+
 const sequelize = process.env.DATABASE_URL
   ? new Sequelize(process.env.DATABASE_URL, {
       dialect: "postgres",
