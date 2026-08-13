@@ -7,9 +7,11 @@ const sequelize = require("./src/config/database");
 // Importaremos los modelos para que Sequelize detecte las tablas
 const User = require("./src/models/User");
 const Transaction = require("./src/models/Transaction");
+const ContactoTransferencia = require("./src/models/ContactoTransferencia");
 // Importar rutas
-const userRoutes = require('./src/routes/user.routes');
-const transactionRoutes = require('./src/routes/transaction.routes');
+const userRoutes = require("./src/routes/user.routes");
+const transactionRoutes = require("./src/routes/transaction.routes");
+const contactoTransferenciaRoutes = require("./src/routes/contactoTransferencia.routes");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -37,8 +39,9 @@ app.get("/", (req, res) => {
   res.sendResponse("success", "Bienvenido a la API REST de AlkeWallet Backend");
 });
 // Registrar Rutas de API
-app.use('/api/v1/usuarios', userRoutes);
-app.use('/api/v1/transacciones', transactionRoutes);
+app.use("/api/v1/usuarios", userRoutes);
+app.use("/api/v1/transacciones", transactionRoutes);
+app.use("/api/v1/contactos-transferencia", contactoTransferenciaRoutes);
 // Iniciar servidor y sincronizar base de datos
 const startServer = async () => {
   try {
