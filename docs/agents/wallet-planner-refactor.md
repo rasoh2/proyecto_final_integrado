@@ -30,3 +30,12 @@ A partir de ahora, todo plan de desarrollo complejo debe incluir una sección de
 
 ### Solución requerida:
 Añadir a la hoja de ruta la configuración de un workflow de GitHub Actions que compile y pruebe el código en cada Pull Request antes de autorizar cualquier mezcla (merge) a la rama principal.
+
+---
+
+## 4. Dependencia de Secretos en Entorno CI/CD
+* En [`.github/workflows/ci.yml`](file:///c:/Users/Sebastian/Desktop/Programacion/proyectos/proyecto%20final%20integrado/.github/workflows/ci.yml) planeaste que el test suite dependa de un secreto de GitHub (`secrets.DATABASE_URL`). Esto impedirá que cualquier pull request de repositorios bifurcados (forks) complete el CI debido a las restricciones de seguridad de secretos de GitHub Actions.
+
+### Solución requerida:
+Exigir al arquitecto de backend configurar SQLite local para la suite de pruebas a fin de evitar el uso de bases de datos cloud y secretos en el entorno de CI/CD.
+

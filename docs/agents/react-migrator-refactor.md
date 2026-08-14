@@ -32,3 +32,12 @@ Encapsula las llamadas HTTP en un cliente de servicio (`src/services/api.ts`). E
 
 ### Solución requerida:
 Implementa un enrutador cliente formal usando `react-router-dom` para manejar la navegación web real a través de la barra de direcciones del navegador.
+
+---
+
+## 4. Riesgo de Exceder Cuota (`QuotaExceededError`) en localStorage
+* En [`alke-wallet/src/services/api.ts`](file:///c:/Users/Sebastian/Desktop/Programacion/proyectos/proyecto%20final%20integrado/alke-wallet/src/services/api.ts), agregas indefinidamente transacciones simuladas al historial local usando `list.unshift` sin ningún límite. El almacenamiento `localStorage` está capado a 5MB; si se acumulan demasiadas filas simuladas, la aplicación lanzará un error fatal en el navegador del usuario.
+
+### Solución requerida:
+Truncar la lista de transacciones simuladas a un máximo de 50 o 100 registros con `.slice(0, 50)` antes de escribir en el `localStorage`.
+

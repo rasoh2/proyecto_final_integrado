@@ -30,3 +30,12 @@ Crear scripts de prueba de carga local usando herramientas como `autocannon` o `
 
 ### Solución requerida:
 Instalar y configurar `Playwright` o `Cypress` para automatizar al menos un flujo completo: registro ➔ inicio de sesión ➔ depósito de prueba ➔ transferencia exitosa.
+
+---
+
+## 4. Dependencia de Base de Datos Cloud en Tests (Falta de Aislamiento)
+* Estás ejecutando el suite de pruebas en [`backend.test.js`](file:///c:/Users/Sebastian/Desktop/Programacion/proyectos/proyecto%20final%20integrado/backend/src/tests/backend.test.js) contra tu base de datos de Neon en la nube. Esto contamina datos y hace que las pruebas fallen si estás offline o si el CI/CD no tiene acceso a las credenciales secretas.
+
+### Solución requerida:
+Configurar Sequelize para usar una base de datos SQLite en memoria (`sqlite::memory:`) o una base de datos de pruebas local dedicada cuando `NODE_ENV === 'test'`.
+

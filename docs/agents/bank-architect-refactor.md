@@ -44,3 +44,12 @@ Haces reemplazos de strings ineficientes (`replace('channel_binding=require', ''
 
 ### Solución requerida:
 Usa la librería nativa `url` de Node.js para parsear la URL de conexión de forma estructurada, sanear los parámetros de consulta (`searchParams.delete('channel_binding')`) y reconstruir la URI de forma limpia.
+
+---
+
+## 4. Ausencia de Límites de Transacción
+* No definiste ningún límite superior para las transferencias en [`transaction.controller.js`](file:///c:/Users/Sebastian/Desktop/Programacion/proyectos/proyecto%20final%20integrado/backend/src/controllers/transaction.controller.js). Si un usuario intenta enviar un monto extremadamente alto (ej: `1e20`), causarás un desbordamiento aritmético en PostgreSQL o errores fatales de punto flotante en Node.js.
+
+### Solución requerida:
+Establecer un límite de transferencia razonable por transacción (ej: $5.000.000 CLP) y retornar un código `400 Bad Request` si se excede.
+
