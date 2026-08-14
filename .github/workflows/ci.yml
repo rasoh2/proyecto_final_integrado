@@ -1,0 +1,62 @@
+name: AlkeWallet CI/CD Quality Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-test:
+    name: Backend Lint and Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
+
+      - name: Install Backend Dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Run Backend Integration Tests
+        run: |
+          cd backend
+          npm run test
+        env:
+          NODE_ENV: test
+          JWT_SECRET: ci_secret_key_for_testing_alkewallet_1234
+          NEON_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # En caso de no tener secrets, la base de datos se omitirá o fallará graciosamente si no se conecta.
+          # Para la ejecución de CI general, usaremos una DB simulada o una dedicada de integración si se provee.
+
+  frontend-build:
+    name: Frontend Build Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: 'alke-wallet/package-lock.json'
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd alke-wallet
+          npm ci
+
+      - name: Verify Frontend Compilation (Vite + TS)
+        run: |
+          cd alke-wallet
+          npm run build

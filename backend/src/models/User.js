@@ -23,7 +23,7 @@ const User = sequelize.define(
       allowNull: false,
     },
     saldo: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(15, 2),
       allowNull: false,
       defaultValue: 1000000.00, // Todo usuario arranca con 1,000,000 de saldo a nivel DB
     },

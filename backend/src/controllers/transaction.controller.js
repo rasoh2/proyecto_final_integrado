@@ -127,14 +127,13 @@ exports.transfer = async (req, res) => {
 
   const t = await sequelize.transaction();
   try {
-    // Buscar receptor y bloquear la fila para evitar inconsistencias
-    const receiver = await User.findOne({
+    // 1. Buscar receptor sin bloquear para validar existencia e ID
+    const receiverCheck = await User.findOne({
       where: { correo: receiver_correo },
       transaction: t,
-      lock: t.LOCK.UPDATE,
     });
 
-    if (!receiver) {
+    if (!receiverCheck) {
       await t.rollback();
       return res.sendResponse(
         "error",
@@ -144,7 +143,7 @@ exports.transfer = async (req, res) => {
       );
     }
 
-    if (senderId === receiver.id) {
+    if (senderId === receiverCheck.id) {
       await t.rollback();
       return res.sendResponse(
         "error",
@@ -154,16 +153,34 @@ exports.transfer = async (req, res) => {
       );
     }
 
-    // Buscar emisor y bloquear fila
-    const sender = await User.findByPk(senderId, { 
+    // 2. Ordenar IDs de forma determinista para adquirir bloqueos UPDATE y evitar Deadlocks
+    const firstLockId = senderId < receiverCheck.id ? senderId : receiverCheck.id;
+    const secondLockId = senderId < receiverCheck.id ? receiverCheck.id : senderId;
+
+    // Adquirir bloqueos en orden estricto
+    const firstUser = await User.findByPk(firstLockId, {
       transaction: t,
-      lock: t.LOCK.UPDATE 
+      lock: t.LOCK.UPDATE,
     });
 
-    if (!sender) {
+    const secondUser = await User.findByPk(secondLockId, {
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+
+    if (!firstUser || !secondUser) {
       await t.rollback();
-      return res.sendResponse("error", "Emisor no encontrado", null, 404);
+      return res.sendResponse(
+        "error",
+        "Error al recuperar datos de los usuarios participantes",
+        null,
+        500,
+      );
     }
+
+    // Asignar emisor y receptor según el ID correspondiente
+    const sender = firstLockId === senderId ? firstUser : secondUser;
+    const receiver = firstLockId === receiverCheck.id ? firstUser : secondUser;
 
     if (parseFloat(sender.saldo) < parseFloat(monto)) {
       await t.rollback();

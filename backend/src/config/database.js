@@ -4,22 +4,17 @@ require("dotenv").config();
 let dbUrl = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL;
 
 if (dbUrl) {
-  // Limpiar channel_binding si está presente para evitar problemas de compatibilidad con el driver 'pg'
-  if (dbUrl.includes("channel_binding=")) {
-    try {
-      const urlObj = new URL(dbUrl);
-      urlObj.searchParams.delete("channel_binding");
-      dbUrl = urlObj.toString();
-    } catch (e) {
-      dbUrl = dbUrl.replace(/[?&]channel_binding=[^&]*/g, "");
-    }
-  }
-
   try {
-    const parsed = new URL(dbUrl);
-    console.log(`🔌 Conectando a base de datos via URL en host: ${parsed.hostname}, puerto: ${parsed.port || '5432'}, db: ${parsed.pathname}`);
+    const urlObj = new URL(dbUrl);
+    // Eliminar parámetros de consulta incompatibles con el driver nativo de postgres pg
+    if (urlObj.searchParams.has("channel_binding")) {
+      urlObj.searchParams.delete("channel_binding");
+    }
+    dbUrl = urlObj.toString();
+    console.log(`🔌 Conectando a base de datos via URL en host: ${urlObj.hostname}, puerto: ${urlObj.port || '5432'}, db: ${urlObj.pathname}`);
   } catch (e) {
-    console.log(`🔌 URL de base de datos detectada pero falló al parsear: ${e.message}`);
+    console.log(`🔌 Error al parsear URL de conexión estructurada: ${e.message}. Aplicando fallback regex.`);
+    dbUrl = dbUrl.replace(/([?&])channel_binding=[^&]*(&|$)/, '$1').replace(/[?&]$/, '');
   }
 } else {
   console.log(`🔌 Conectando usando variables individuales a host: ${process.env.DB_HOST || "127.0.0.1"}`);
