@@ -12,30 +12,13 @@ describe("💰 AlkeWallet - Suite de Calidad y Pruebas (@bank-qa)", () => {
   const emailB = `test_receiver_${Date.now()}@alkewallet.cl`;
 
   beforeAll(async () => {
-    // Asegurar que la conexión a la base de datos esté lista
+    // Asegurar que la conexión a la base de datos esté lista y sincronizar SQLite en memoria
     await sequelize.authenticate();
+    await sequelize.sync({ force: true });
   });
 
   afterAll(async () => {
-    // Limpieza: Eliminar usuarios de prueba y sus transacciones de la base de datos
-    if (userA && userB) {
-      await Transaction.destroy({
-        where: {
-          sender_id: [userA.id, userB.id],
-        },
-      });
-      await Transaction.destroy({
-        where: {
-          receiver_id: [userA.id, userB.id],
-        },
-      });
-      await User.destroy({
-        where: {
-          id: [userA.id, userB.id],
-        },
-      });
-    }
-    // Cerrar conexión
+    // Cerrar conexión (SQLite en memoria se elimina automáticamente al cerrar la sesión)
     await sequelize.close();
   });
 
@@ -100,7 +83,22 @@ describe("💰 AlkeWallet - Suite de Calidad y Pruebas (@bank-qa)", () => {
     expect(parseFloat(resTransfer.body.data.tuNuevoSaldo)).toBe(950000.0);
   });
 
-  test("AC-009 (Evitar Deadlocks): Ejecutar transferencias cruzadas simultáneas de forma concurrente", async () => {
+  test("AC-017: Intentar realizar transferencia que supera el límite permitido de 5M", async () => {
+    const resTransfer = await request(app)
+      .post("/api/v1/transacciones/transferencia")
+      .set("Authorization", `Bearer ${tokenA}`)
+      .send({
+        receiver_correo: emailB,
+        monto: 6000000.0, // Transferir $6.000.000 CLP (Excede el límite de 5M)
+      });
+
+    expect(resTransfer.status).toBe(400);
+    expect(resTransfer.body.status).toBe("error");
+    expect(resTransfer.body.message).toBe("El monto máximo permitido por transferencia es de $5.000.000 CLP");
+  });
+
+  const isSqlite = sequelize.options.dialect === "sqlite";
+  (isSqlite ? test.skip : test)("AC-009 (Evitar Deadlocks): Ejecutar transferencias cruzadas simultáneas de forma concurrente", async () => {
     // Simular que el Usuario A envía 10.000 a B, y el Usuario B envía 15.000 a A simultáneamente
     const promise1 = request(app)
       .post("/api/v1/transacciones/transferencia")

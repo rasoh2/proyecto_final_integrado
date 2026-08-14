@@ -116,10 +116,21 @@ exports.transfer = async (req, res) => {
     );
   }
 
-  if (!monto || parseFloat(monto) <= 0 || isNaN(parseFloat(monto))) {
+  const numMonto = parseFloat(monto);
+  if (!monto || numMonto <= 0 || isNaN(numMonto)) {
     return res.sendResponse(
       "error",
       "El monto debe ser un número mayor a 0",
+      null,
+      400,
+    );
+  }
+
+  const MAX_TRANSFER_LIMIT = 5000000;
+  if (numMonto > MAX_TRANSFER_LIMIT) {
+    return res.sendResponse(
+      "error",
+      "El monto máximo permitido por transferencia es de $5.000.000 CLP",
       null,
       400,
     );
@@ -157,15 +168,17 @@ exports.transfer = async (req, res) => {
     const firstLockId = senderId < receiverCheck.id ? senderId : receiverCheck.id;
     const secondLockId = senderId < receiverCheck.id ? receiverCheck.id : senderId;
 
-    // Adquirir bloqueos en orden estricto
+    // Adquirir bloqueos en orden estricto (solo PostgreSQL soporta LOCK.UPDATE)
+    const lockOption = sequelize.options.dialect === "sqlite" ? {} : { lock: t.LOCK.UPDATE };
+
     const firstUser = await User.findByPk(firstLockId, {
       transaction: t,
-      lock: t.LOCK.UPDATE,
+      ...lockOption,
     });
 
     const secondUser = await User.findByPk(secondLockId, {
       transaction: t,
-      lock: t.LOCK.UPDATE,
+      ...lockOption,
     });
 
     if (!firstUser || !secondUser) {

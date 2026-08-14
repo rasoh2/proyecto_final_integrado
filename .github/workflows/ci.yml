@@ -33,9 +33,6 @@ jobs:
         env:
           NODE_ENV: test
           JWT_SECRET: ci_secret_key_for_testing_alkewallet_1234
-          NEON_DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          # En caso de no tener secrets, la base de datos se omitirá o fallará graciosamente si no se conecta.
-          # Para la ejecución de CI general, usaremos una DB simulada o una dedicada de integración si se provee.
 
   frontend-build:
     name: Frontend Build Verification
